@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* ─── Custom CSS Variables ─────────────────────────────── */
+:root {
+  --sidebar-width: 240px;
+  --topbar-height: 56px;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ─── Transitions ───────────────────────────────────────── */
+.sidebar-transition {
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item-hover {
+  transition: background-color 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+}
