@@ -4,13 +4,32 @@ import { useState, useEffect } from "react";
 
 const columns = [
   "DATE", "QA name", "QA ID", "Shift", "Line", "Time", "Brand", "Model", 
-  "Size", "Colour", "Po.No.", "Item Name", "Production Output", "Qty Check", 
-  "Qty Reject", "Defect Rate (%)", "Reject Types", "How to Repair", "Aksi"
+  "Size", "Color", "PO No.", "Item Name", "Production Output", "Qty Checked", 
+  "Qty Rejected", "Defect Rate (%)", "Reject Types", "Repair Method", "Action"
 ];
 
 export default function DataTablePage() {
   const [rows, setRows] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const filteredRows = rows.filter((row) => {
+    if (startDate && row.date < startDate) return false;
+    if (endDate && row.date > endDate) return false;
+    
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return [
+        row.qa_name, row.qa_id, row.brand, row.model, 
+        row.po_no, row.item_name, row.rejectTypes, row.repair,
+        row.shift, row.line, row.date
+      ].some(val => val && String(val).toLowerCase().includes(q));
+    }
+    return true;
+  });
 
   const fetchInspections = async () => {
     try {
@@ -63,25 +82,24 @@ export default function DataTablePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-slate-100">Data Table</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Semua record defect harian</p>
+          <p className="text-xs text-slate-500 mt-0.5">All daily defect records</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Date Range Filter */}
           <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 h-[34px]">
             <span className="text-xs text-slate-400">Range:</span>
-            <input type="date" className="bg-transparent text-slate-200 text-xs outline-none w-auto cursor-pointer" style={{ colorScheme: "dark" }} />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-slate-200 text-xs outline-none w-auto cursor-pointer" style={{ colorScheme: "dark" }} />
             <span className="text-xs text-slate-400">-</span>
-            <input type="date" className="bg-transparent text-slate-200 text-xs outline-none w-auto cursor-pointer" style={{ colorScheme: "dark" }} />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-slate-200 text-xs outline-none w-auto cursor-pointer" style={{ colorScheme: "dark" }} />
           </div>
           
           <input
             type="search"
-            placeholder="Cari data..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search data..."
             className="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 h-[34px] outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 w-44"
           />
-          <button className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 h-[34px] rounded-lg transition-colors font-medium">
-            Export Excel
-          </button>
         </div>
       </div>
 
@@ -90,9 +108,6 @@ export default function DataTablePage() {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-slate-800/80">
-                <th className="w-8 px-4 py-3 whitespace-nowrap">
-                  <input type="checkbox" className="accent-blue-500 w-3.5 h-3.5" />
-                </th>
                 {columns.map((h) => (
                   <th
                     key={h}
@@ -107,23 +122,20 @@ export default function DataTablePage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={20} className="px-4 py-8 text-center text-slate-500">
-                     Memuat data dari database...
+                     Loading data from database...
                   </td>
                 </tr>
-              ) : rows.length === 0 ? (
+              ) : filteredRows.length === 0 ? (
                  <tr>
                   <td colSpan={20} className="px-4 py-8 text-center text-slate-500">
-                     Belum ada data. Silakan input form atau upload Excel.
+                     No data found or no matching records.
                   </td>
                 </tr>
-              ) : rows.map((row, i) => (
+              ) : filteredRows.map((row, i) => (
                 <tr
                   key={i}
                   className="border-t border-slate-800/60 hover:bg-slate-800/40 transition-colors"
                 >
-                  <td className="px-4 py-2.5 whitespace-nowrap">
-                    <input type="checkbox" className="accent-blue-500 w-3.5 h-3.5" />
-                  </td>
                   <td className="px-3 py-2.5 whitespace-nowrap font-mono text-slate-400">{row.date}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-300">{row.qa_name}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap font-mono text-blue-400">{row.qa_id}</td>
@@ -145,7 +157,7 @@ export default function DataTablePage() {
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex gap-2">
                       <button className="text-blue-400 hover:text-blue-300 transition-colors text-[10px]">Edit</button>
-                      <button className="text-red-400 hover:text-red-300 transition-colors text-[10px]">Hapus</button>
+                      <button className="text-red-400 hover:text-red-300 transition-colors text-[10px]">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -157,8 +169,8 @@ export default function DataTablePage() {
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800">
           <p className="text-[11px] text-slate-500">
-            Menampilkan <span className="text-slate-300">{rows.length > 0 ? "1" : "0"}–{rows.length > 10 ? "10" : rows.length}</span> dari{" "}
-            <span className="text-slate-300">{rows.length}</span> data
+            Showing <span className="text-slate-300">{filteredRows.length > 0 ? "1" : "0"}–{filteredRows.length > 10 ? "10" : filteredRows.length}</span> of{" "}
+            <span className="text-slate-300">{filteredRows.length}</span> records
           </p>
           <div className="flex gap-1">
             {["‹", "1", "›"].map((p) => (

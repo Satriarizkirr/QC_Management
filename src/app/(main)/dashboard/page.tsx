@@ -20,12 +20,14 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  BarChart
+  BarChart,
+  ReferenceLine
 } from "recharts";
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   
   // Filters
   const [brand, setBrand] = useState("");
@@ -56,7 +58,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData();
+    setMounted(true);
   }, [brand, line, defectType, startDate, endDate]);
+
+  if (!mounted) return null;
 
   if (!data && loading) {
     return <div className="p-10 text-center text-slate-400">Loading Dashboard...</div>;
@@ -71,7 +76,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-lg font-bold text-slate-100">Quality Dashboard</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Analisis Pareto dan Performa Mingguan/Bulanan
+            Pareto Analysis & Weekly/Monthly Performance
           </p>
         </div>
         
@@ -82,7 +87,7 @@ export default function DashboardPage() {
             onChange={(e) => setBrand(e.target.value)}
             className="text-xs bg-slate-800 text-slate-400 border border-slate-700 rounded-lg px-2 py-1.5 outline-none h-[34px] cursor-pointer hover:border-slate-600 transition-colors"
           >
-            <option value="">Semua Brand</option>
+            <option value="">All Brands</option>
             {filters?.brands.map((b: string) => (
               <option key={b} value={b}>{b}</option>
             ))}
@@ -94,7 +99,7 @@ export default function DashboardPage() {
             onChange={(e) => setLine(e.target.value)}
             className="text-xs bg-slate-800 text-slate-400 border border-slate-700 rounded-lg px-2 py-1.5 outline-none h-[34px] cursor-pointer hover:border-slate-600 transition-colors"
           >
-            <option value="">Semua Line</option>
+            <option value="">All Lines</option>
             {filters?.lines?.map((l: string) => (
               <option key={l} value={l}>{l}</option>
             ))}
@@ -106,7 +111,7 @@ export default function DashboardPage() {
             onChange={(e) => setDefectType(e.target.value)}
             className="text-xs bg-slate-800 text-slate-400 border border-slate-700 rounded-lg px-2 py-1.5 outline-none h-[34px] cursor-pointer hover:border-slate-600 transition-colors"
           >
-            <option value="">Semua Defect</option>
+            <option value="">All Defects</option>
             {filters?.defect_types?.map((d: string) => (
               <option key={d} value={d}>{d}</option>
             ))}
@@ -141,9 +146,9 @@ export default function DashboardPage() {
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Produksi", value: kpis?.total_production || 0, icon: Activity, color: "text-blue-400", bg: "bg-blue-500/10" },
-          { label: "Total Diperiksa", value: kpis?.total_checked || 0, icon: CheckCircle2, color: "text-green-400", bg: "bg-green-500/10" },
-          { label: "Total Defect", value: kpis?.total_defects || 0, icon: AlertTriangle, color: "text-red-400", bg: "bg-red-500/10" },
+          { label: "Total Production", value: kpis?.total_production || 0, icon: Activity, color: "text-blue-400", bg: "bg-blue-500/10" },
+          { label: "Total Checked", value: kpis?.total_checked || 0, icon: CheckCircle2, color: "text-green-400", bg: "bg-green-500/10" },
+          { label: "Total Defects", value: kpis?.total_defects || 0, icon: AlertTriangle, color: "text-red-400", bg: "bg-red-500/10" },
           { label: "Defect Rate", value: `${kpis?.defect_rate || 0}%`, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-500/10" },
           { label: "Weekly Rate", value: `${kpis?.weekly_rate || 0}%`, icon: Activity, color: "text-purple-400", bg: "bg-purple-500/10" },
           { label: "Monthly Rate", value: `${kpis?.monthly_rate || 0}%`, icon: Activity, color: "text-pink-400", bg: "bg-pink-500/10" },
@@ -165,20 +170,29 @@ export default function DashboardPage() {
         {/* Pareto Chart */}
         <div className="bg-slate-900 border border-slate-700/60 rounded-xl p-4">
           <h2 className="text-sm font-semibold text-slate-100 mb-4">Pareto Defect Analysis</h2>
-          <div className="w-full h-72 min-h-[288px]">
-            <ResponsiveContainer width="100%" height="100%" minHeight={250}>
+          <div className="w-full h-72">
+            <ResponsiveContainer width="100%" height={288}>
               <ComposedChart data={pareto || []} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} angle={-45} textAnchor="end" height={60} />
                 <YAxis yAxisId="left" stroke="#94a3b8" fontSize={10} />
-                <YAxis yAxisId="right" orientation="right" stroke="#fbbf24" fontSize={10} tickFormatter={(val) => `${val}%`} />
+                <YAxis 
+                  yAxisId="right" 
+                  orientation="right" 
+                  stroke="#fbbf24" 
+                  fontSize={10} 
+                  domain={[0, 100]}
+                  ticks={[0, 20, 40, 60, 80, 100]}
+                  tickFormatter={(val) => `${val}%`} 
+                />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', fontSize: '12px' }}
                   itemStyle={{ color: '#e2e8f0' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
-                <Bar yAxisId="left" dataKey="value" name="Jumlah Defect" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="cumulative_percent" name="Persentase Kumulatif" stroke="#fbbf24" strokeWidth={2} dot={{ r: 3 }} />
+                <ReferenceLine yAxisId="right" y={80} stroke="#f87171" strokeDasharray="3 3" label={{ position: 'right', value: '80%', fill: '#f87171', fontSize: 10 }} />
+                <Bar yAxisId="left" dataKey="value" name="Defect Count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="cumulative_percent" name="Cumulative Percentage" stroke="#fbbf24" strokeWidth={2} dot={{ r: 3 }} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -186,9 +200,9 @@ export default function DashboardPage() {
 
         {/* Trend Chart */}
         <div className="bg-slate-900 border border-slate-700/60 rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-slate-100 mb-4">Trend Produksi vs Defect Harian</h2>
-          <div className="w-full h-72 min-h-[288px]">
-            <ResponsiveContainer width="100%" height="100%" minHeight={250}>
+          <h2 className="text-sm font-semibold text-slate-100 mb-4">Daily Production vs Defect Trend</h2>
+          <div className="w-full h-72">
+            <ResponsiveContainer width="100%" height={288}>
               <BarChart data={trend || []} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} />
@@ -199,7 +213,7 @@ export default function DashboardPage() {
                   itemStyle={{ color: '#e2e8f0' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
-                <Bar yAxisId="left" dataKey="checked" name="Qty Diperiksa" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="left" dataKey="checked" name="Qty Checked" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar yAxisId="right" dataKey="defects" name="Qty Defect" fill="#f87171" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -211,9 +225,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pb-8">
         {/* Weekly Trend */}
         <div className="bg-slate-900 border border-slate-700/60 rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-slate-100 mb-4">Performa Defect Mingguan (Weekly)</h2>
-          <div className="w-full h-60 min-h-[240px]">
-            <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+          <h2 className="text-sm font-semibold text-slate-100 mb-4">Weekly Defect Performance</h2>
+          <div className="w-full h-60">
+            <ResponsiveContainer width="100%" height={240}>
               <ComposedChart data={data?.trend_weekly || []} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} />
@@ -224,7 +238,7 @@ export default function DashboardPage() {
                   itemStyle={{ color: '#e2e8f0' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
-                <Bar yAxisId="left" dataKey="defects" name="Total Defect" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
+                <Bar yAxisId="left" dataKey="defects" name="Total Defects" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
                 <Line yAxisId="right" type="monotone" dataKey="rate" name="Defect Rate %" stroke="#a855f7" strokeWidth={2} dot={{ r: 4 }} />
               </ComposedChart>
             </ResponsiveContainer>
@@ -233,9 +247,9 @@ export default function DashboardPage() {
 
         {/* Monthly Trend */}
         <div className="bg-slate-900 border border-slate-700/60 rounded-xl p-4">
-          <h2 className="text-sm font-semibold text-slate-100 mb-4">Performa Defect Bulanan (Monthly)</h2>
-          <div className="w-full h-60 min-h-[240px]">
-            <ResponsiveContainer width="100%" height="100%" minHeight={200}>
+          <h2 className="text-sm font-semibold text-slate-100 mb-4">Monthly Defect Performance</h2>
+          <div className="w-full h-60">
+            <ResponsiveContainer width="100%" height={240}>
               <ComposedChart data={data?.trend_monthly || []} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} />
@@ -246,7 +260,7 @@ export default function DashboardPage() {
                   itemStyle={{ color: '#e2e8f0' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
-                <Bar yAxisId="left" dataKey="defects" name="Total Defect" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar yAxisId="left" dataKey="defects" name="Total Defects" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={40} />
                 <Line yAxisId="right" type="monotone" dataKey="rate" name="Defect Rate %" stroke="#ec4899" strokeWidth={2} dot={{ r: 4 }} />
               </ComposedChart>
             </ResponsiveContainer>

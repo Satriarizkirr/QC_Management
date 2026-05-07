@@ -1,13 +1,12 @@
 "use client";
 
-import { Sun, Moon, Bell, ChevronDown } from "lucide-react";
+import { Sun, Moon, Bell } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useState } from "react";
 
 export default function Topbar() {
   const { theme, toggleTheme } = useTheme();
   const [notifOpen, setNotifOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <header className="h-14 shrink-0 flex items-center justify-between px-4 border-b border-slate-700/60 bg-slate-900 z-20">
@@ -16,7 +15,7 @@ export default function Topbar() {
         <div className="hidden sm:block">
           <p className="text-xs text-slate-500">Quality Control</p>
           <p className="text-sm font-semibold text-slate-100 leading-tight">
-            Defect Tracking System
+            Management System
           </p>
         </div>
       </div>
@@ -37,7 +36,6 @@ export default function Topbar() {
           <button
             onClick={() => {
               setNotifOpen(!notifOpen);
-              setProfileOpen(false);
             }}
             className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors relative"
           >

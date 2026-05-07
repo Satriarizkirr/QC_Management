@@ -5,8 +5,6 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard,
-  ClipboardEdit,
-  FileSpreadsheet,
   Table2,
   ChevronLeft,
   ChevronRight,
@@ -55,10 +53,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <div className="overflow-hidden">
             <p className="text-white font-bold text-sm leading-tight whitespace-nowrap">
-              QC Tracker
+              Quality Control
             </p>
             <p className="text-slate-400 text-[10px] leading-tight whitespace-nowrap">
-              Defect Management
+              Management System
             </p>
           </div>
         )}
