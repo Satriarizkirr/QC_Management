@@ -30,21 +30,25 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   
   // Filters
+  const [process, setProcess] = useState("sewing");
   const [brand, setBrand] = useState("");
   const [line, setLine] = useState("");
   const [defectType, setDefectType] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [topDefects, setTopDefects] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
+      if (process) params.append("process", process);
       if (brand) params.append("brand", brand);
       if (line) params.append("line", line);
       if (defectType) params.append("defect_type", defectType);
       if (startDate) params.append("start_date", startDate);
       if (endDate) params.append("end_date", endDate);
+      if (topDefects) params.append("top_defects", "true");
 
       const res = await fetch(`http://localhost:8000/api/dashboard-stats/?${params.toString()}`);
       const json = await res.json();
@@ -59,7 +63,7 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchData();
     setMounted(true);
-  }, [brand, line, defectType, startDate, endDate]);
+  }, [brand, line, defectType, startDate, endDate, process, topDefects]);
 
   if (!mounted) return null;
 
@@ -75,9 +79,20 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-lg font-bold text-slate-100">Quality Dashboard</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Pareto Analysis & Weekly/Monthly Performance
-          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <button 
+              onClick={() => { setProcess('sewing'); setBrand(""); setLine(""); setDefectType(""); }}
+              className={`px-4 py-1 text-xs font-semibold rounded-full transition-all ${process === 'sewing' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-slate-200'}`}
+            >
+              SEWING
+            </button>
+            <button 
+              onClick={() => { setProcess('assembling'); setBrand(""); setLine(""); setDefectType(""); }}
+              className={`px-4 py-1 text-xs font-semibold rounded-full transition-all ${process === 'assembling' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 hover:text-slate-200'}`}
+            >
+              ASSEMBLING
+            </button>
+          </div>
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
@@ -136,6 +151,14 @@ export default function DashboardPage() {
               style={{ colorScheme: "dark" }} 
             />
           </div>
+
+          {/* Top 5 Toggle */}
+          <button 
+            onClick={() => setTopDefects(!topDefects)}
+            className={`text-xs px-3 h-[34px] rounded-lg transition-colors font-medium flex items-center gap-1.5 border ${topDefects ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20' : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600'}`}
+          >
+            <TrendingUp size={12} /> Top 5
+          </button>
 
           <button onClick={fetchData} className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 h-[34px] rounded-lg transition-colors font-medium flex items-center gap-1.5">
             <Filter size={12} /> Filter
