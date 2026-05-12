@@ -8,7 +8,6 @@ import {
   Table2,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -35,28 +34,32 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={`
-        sidebar-transition relative flex flex-col bg-slate-900 border-r border-slate-700/60
-        h-screen overflow-hidden shrink-0 z-30
+        sidebar-transition relative flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-700/60
+        h-screen overflow-hidden shrink-0 z-30 transition-colors duration-200
         ${collapsed ? "w-[64px]" : "w-[240px]"}
       `}
     >
       {/* ── Logo / Brand ── */}
       <div
         className={`
-          flex items-center gap-3 px-4 h-14 border-b border-slate-700/60 shrink-0
+          flex items-center gap-3 px-4 h-14 border-b border-slate-200/80 dark:border-slate-700/60 shrink-0
           ${collapsed ? "justify-center px-0" : ""}
         `}
       >
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 shrink-0">
-          <ShieldCheck size={16} className="text-white" />
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white overflow-hidden shrink-0 border border-slate-100 dark:border-slate-800 shadow-sm">
+          <img
+            src="/logo.png"
+            alt="Universal Luggage Logo"
+            className="w-full h-full object-contain p-0.5"
+          />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <p className="text-white font-bold text-sm leading-tight whitespace-nowrap">
-              Quality Control
+            <p className="text-slate-900 dark:text-white font-bold text-xs leading-tight whitespace-nowrap tracking-tight">
+              Universal Luggage
             </p>
-            <p className="text-slate-400 text-[10px] leading-tight whitespace-nowrap">
-              Management System
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] leading-tight whitespace-nowrap tracking-wider">
+              Indonesia
             </p>
           </div>
         )}
@@ -65,7 +68,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* ── Navigation ── */}
       <nav className="flex flex-col gap-1 px-2 pt-4 flex-1 overflow-y-auto">
         {!collapsed && (
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest px-2 mb-1">
+          <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1">
             Menu
           </p>
         )}
@@ -78,19 +81,19 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               href={href}
               title={collapsed ? label : undefined}
               className={`
-                nav-item-hover flex items-center gap-3 rounded-lg px-2 py-2.5 text-sm font-medium
+                nav-item-hover flex items-center gap-3 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors
                 ${collapsed ? "justify-center" : ""}
                 ${
                   isActive
-                    ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-100 border border-transparent"
+                    ? "bg-blue-600/10 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 border border-transparent"
                 }
               `}
             >
               <Icon size={18} className="shrink-0" />
               {!collapsed && <span className="truncate">{label}</span>}
               {isActive && !collapsed && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400 shrink-0" />
               )}
             </Link>
           );
@@ -98,12 +101,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* ── Collapse Toggle ── */}
-      <div className="shrink-0 border-t border-slate-700/60 p-2">
+      <div className="shrink-0 border-t border-slate-200/80 dark:border-slate-700/60 p-2">
         <button
           onClick={onToggle}
           className={`
-            nav-item-hover w-full flex items-center gap-2 px-2 py-2 rounded-lg
-            text-slate-400 hover:bg-slate-800 hover:text-slate-100 text-sm
+            nav-item-hover w-full flex items-center gap-2 px-2 py-2 rounded-lg transition-colors
+            text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 text-sm
             ${collapsed ? "justify-center" : ""}
           `}
         >
