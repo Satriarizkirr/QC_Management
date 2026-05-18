@@ -3,14 +3,21 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "@/context/ThemeContext";
 
-const columns = [
+const SEWING_COLUMNS = [
   "DATE", "QA name", "QA ID", "Shift", "Line", "Time", "Brand", "Model", 
   "Size", "Color", "PO No.", "Item Name", "Production Output", "Qty Checked", 
   "Qty Rejected", "Defect Rate (%)", "Reject Types", "Repair Method", "Action"
 ];
 
+const ASSEMBLY_COLUMNS = [
+  "DATE", "QA name", "QA ID", "Shift", "Line", "Brand", "Model", 
+  "Size", "Color", "PO No.", "Inspection Qty", "Qty Checked", 
+  "Qty Rejected", "Defect Rate (%)", "Reject Types", "Action"
+];
+
 export default function DataTablePage() {
   const { theme } = useTheme();
+  const [process, setProcess] = useState("sewing");
   const [rows, setRows] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,25 +31,33 @@ export default function DataTablePage() {
     
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return [
+      const searchableValues = process === "sewing" ? [
         row.qa_name, row.qa_id, row.brand, row.model, 
         row.po_no, row.item_name, row.rejectTypes, row.repair,
         row.shift, row.line, row.date
-      ].some(val => val && String(val).toLowerCase().includes(q));
+      ] : [
+        row.qa_name, row.qa_id, row.brand, row.model, 
+        row.po_no, row.rejectTypes,
+        row.shift, row.line, row.date
+      ];
+      return searchableValues.some(val => val && String(val).toLowerCase().includes(q));
     }
     return true;
   });
 
   const fetchInspections = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/inspections/");
+      const endpoint = process === "sewing" ? "inspections" : "assembling-inspections";
+      const res = await fetch(`http://localhost:8000/api/${endpoint}/`);
       if (res.ok) {
         const data = await res.json();
         
         const flattenedRows: any[] = [];
         data.forEach((inspection: any) => {
           const totalReject = inspection.defects ? inspection.defects.reduce((sum: number, d: any) => sum + d.qty, 0) : 0;
-          const defectRate = inspection.qty_check > 0 ? ((totalReject / inspection.qty_check) * 100).toFixed(2) : "0.00";
+          const qtyCheck = process === "sewing" ? inspection.qty_check : inspection.qty_check_hours;
+          const defectRate = qtyCheck > 0 ? ((totalReject / qtyCheck) * 100).toFixed(2) : "0.00";
           
           if (!inspection.defects || inspection.defects.length === 0) {
             flattenedRows.push({
@@ -53,14 +68,13 @@ export default function DataTablePage() {
               repair: "-"
             });
           } else {
-            // Flatten agar tiap defect muncul di row terpisah di tabel sesuai mock data awal
             inspection.defects.forEach((defect: any) => {
               flattenedRows.push({
                 ...inspection,
                 qtyReject: defect.qty,
                 defectRate: defectRate, 
                 rejectTypes: defect.defect_type,
-                repair: defect.repair_method
+                repair: defect.repair_method || "-"
               });
             });
           }
@@ -77,14 +91,32 @@ export default function DataTablePage() {
 
   useEffect(() => {
     fetchInspections();
-  }, []);
+  }, [process]);
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">Data Table</h1>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">All daily defect records</p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">Data Table</h1>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">All daily defect records</p>
+          </div>
+          
+          {/* Process Selector (Sewing / Assembly) */}
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-full border border-slate-200/80 dark:border-slate-800/80 self-start sm:self-auto sm:ml-4">
+            <button
+              onClick={() => setProcess('sewing')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 ${process === 'sewing' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+            >
+              Sewing
+            </button>
+            <button
+              onClick={() => setProcess('assembling')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 ${process === 'assembling' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+            >
+              Assembly
+            </button>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Date Range Filter */}
@@ -122,7 +154,7 @@ export default function DataTablePage() {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800">
-                {columns.map((h) => (
+                {(process === "sewing" ? SEWING_COLUMNS : ASSEMBLY_COLUMNS).map((h) => (
                   <th
                     key={h}
                     className="text-left px-3 py-3 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px] whitespace-nowrap"
@@ -155,19 +187,19 @@ export default function DataTablePage() {
                   <td className="px-3 py-2.5 whitespace-nowrap font-mono text-blue-500 dark:text-blue-400">{row.qa_id}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300 text-center">{row.shift}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300 text-center">{row.line}</td>
-                  <td className="px-3 py-2.5 whitespace-nowrap font-mono text-slate-500 dark:text-slate-400">{row.time_range}</td>
+                  {process === "sewing" && <td className="px-3 py-2.5 whitespace-nowrap font-mono text-slate-500 dark:text-slate-400">{row.time_range}</td>}
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300">{row.brand}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300">{row.model}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300">{row.size}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300">{row.colour}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300">{row.po_no}</td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300">{row.item_name}</td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300 text-center">{row.production_output}</td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300 text-center">{row.qty_check}</td>
+                  {process === "sewing" && <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300">{row.item_name}</td>}
+                  <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300 text-center">{process === "sewing" ? row.production_output : row.inspection_quantity}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300 text-center">{process === "sewing" ? row.qty_check : row.qty_check_hours}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-red-500 dark:text-red-400 font-semibold text-center">{row.qtyReject}</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-orange-500 dark:text-orange-400 font-semibold text-center">{row.defectRate}%</td>
                   <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300">{row.rejectTypes}</td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-slate-500 dark:text-slate-400">{row.repair}</td>
+                  {process === "sewing" && <td className="px-3 py-2.5 whitespace-nowrap text-slate-500 dark:text-slate-400">{row.repair}</td>}
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <div className="flex gap-2">
                       <button className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors text-[10px]">Edit</button>

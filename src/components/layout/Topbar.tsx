@@ -1,11 +1,9 @@
 "use client";
 
-import { Sun, Moon, Bell } from "lucide-react";
-import { useTheme } from "@/context/ThemeContext";
+import { Bell } from "lucide-react";
 import { useState } from "react";
 
 export default function Topbar() {
-  const { theme, toggleTheme } = useTheme();
   const [notifOpen, setNotifOpen] = useState(false);
 
   return (
@@ -22,14 +20,7 @@ export default function Topbar() {
 
       {/* ── Right: Actions ── */}
       <div className="flex items-center gap-1">
-        {/* Dark mode toggle */}
-        <button
-          onClick={toggleTheme}
-          title={theme === "dark" ? "Switch to Light" : "Switch to Dark"}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-        >
-          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
+
 
         {/* Notifications */}
         <div className="relative">

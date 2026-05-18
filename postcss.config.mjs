@@ -4,4 +4,5 @@ const config = {
   },
 };
 
+// Force rebuild
 export default config;
